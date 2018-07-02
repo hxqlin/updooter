@@ -2,7 +2,6 @@
  * A Bot for Slack!
  */
 
-
 /**
  * Define a function for initiating a conversation on installation
  * With custom integrations, we don't have a way to find out who installed us, so we can't message them :(
@@ -20,7 +19,6 @@ function onInstallation(bot, installer) {
         });
     }
 }
-
 
 /**
  * Configure the persistence options
@@ -79,30 +77,18 @@ controller.on('rtm_close', function (bot) {
 /**
  * Core bot logic goes here!
  */
-// BEGIN EDITING HERE!
-
-controller.on('bot_channel_join', function (bot, message) {
-    bot.reply(message, "I'm here!")
-});
-
-controller.hears('hello', 'direct_message', function (bot, message) {
-    bot.reply(message, 'Hello!');
-});
-
 
 /**
- * AN example of what could be:
- * Any un-handled direct mention gets a reaction and a pat response!
+ * A direct mention gets some updoots!
  */
-//controller.on('direct_message,mention,direct_mention', function (bot, message) {
-//    bot.api.reactions.add({
-//        timestamp: message.ts,
-//        channel: message.channel,
-//        name: 'robot_face',
-//    }, function (err) {
-//        if (err) {
-//            console.log(err)
-//        }
-//        bot.reply(message, 'I heard you loud and clear boss.');
-//    });
-//});
+controller.on('direct_mention', function (bot, message) {
+    let aReactions = ['pray', 'fire', 'sunglasses', 'aussieparrot', 'fastparrot', 'kirby', 'sonic', 'congaparrot', 'fiestaparrot', 'dealwithitparrot', 'ice-cream-parrot', 'nyan_parrot'];
+
+    for (reaction of aReactions) {
+        bot.api.reactions.add({
+            timestamp: message.ts,
+            channel: message.channel,
+            name: reaction,
+        });
+    }
+});
