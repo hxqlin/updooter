@@ -81,8 +81,11 @@ controller.on('rtm_close', function (bot) {
 /**
  * A direct mention gets some updoots!
  */
-controller.on('direct_mention', function (bot, message) {
-    let aReactions = ['pray', 'fire', 'sunglasses', 'aussieparrot', 'fastparrot', 'kirby', 'sonic', 'congaparrot', 'fiestaparrot', 'dealwithitparrot', 'ice-cream-parrot', 'nyan_parrot'];
+controller.on('direct_mention', function (bot, message) { // 23
+    let aReactions = ['pray', 'fire', 'sunglasses', 'aussieparrot', 'fastparrot', 'kirby', 'sonic', 
+        'congaparrot', 'fiestaparrot', 'dealwithitparrot', 'ice-cream-parrot', 'nyan_parrot', 'bananadance',
+        'thumbsup_parrot', 'coffee_parrot', 'explodyparrot', 'shuffleparrot', 'ultrafastparrot', 'braedon', 
+        'benton', 'cynthia_kawaii', '+2', 'eyes'];
 
     for (reaction of aReactions) {
         bot.api.reactions.add({
