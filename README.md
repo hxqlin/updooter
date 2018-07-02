@@ -1,5 +1,23 @@
 # easy-peasy-bot
 
+## To add updooter to your workspace:
+
+Follow steps 5 through 7 below under "Using Botkit for Custom Bots" (repeated here for convenience):
+
+1. Go to https://my.slack.com/apps/new/A0F7YS25R-bots and pick a name for your new bot.
+2. Once you’ve clicked “Add integration,” you’ll be taken to a page where you can further customize your bot. Of importance is the bot token—take note of it now.
+3. Once you have the token, you can run your bot easily:
+
+    ```bash
+    TOKEN=xoxb-your-token-here npm start
+    ```
+
+    Your bot will now attempt to log into your team. 
+    
+4. Add your bot to the conversation and updoot your message by mentioning @updooter (or whatever username it has been given)! This bot will not respond to anything else.
+
+Note: Many of the reactions used by this bot are custom reactions and may not be available in your workspace.
+
 ## The story of a (Slack)bot
 
 A (not so) long time ago, a team called Tiny Speck built an app to communicate with each other as they worked.
