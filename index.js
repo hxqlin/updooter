@@ -220,4 +220,15 @@ controller.hears("updoot .*", "direct_message", function(bot,message) {
     });
 });
 
+/**
+ * Message the bot "help" for instructions on how to use the bot.
+ */
+
+controller.hears("help", "direct_message", function(bot,message) {
+    bot.reply(message, "i will updoot your message if you mention me by including " +
+        "'@updooter' anywhere in channels that i'm a part of! i can also updoot messages " +
+        "on your behalf in public channels if you let me! once you've been authenticated, " +
+        "message me with the command 'updoot <public-channel-name>' to updoot the latest " +
+        "message in that channel!");
+});
 
