@@ -81,7 +81,7 @@ controller.on("rtm_close", function (bot) {
 
 controller.on(["create_user", "update_user"], function(bot, user) {
     controller.storage.users.save(user);
-    console.log("user saved " + JSON.stringify(user));
+    console.log("user saved " + JSON.stringify(user, null, 2));
 });
 
 /**
@@ -113,99 +113,111 @@ controller.on("direct_mention,mention", function (bot, message) { // 23
  */
 
 controller.hears("updoot .*", "direct_message", function(bot,message) {
-    console.log(message);
+    console.log("debug: ** message: " + JSON.stringify(message, null, 2));
     const aText = message.text.split(" ");
     const sChannelName = aText[1];
-    console.log(sChannelName);
-    console.log("this user sent me a message: " + message.user);
     let user;
 
-    controller.storage.users.get(message.user, function(error, storedUser){
-        user = storedUser;
-        console.log("user: " + JSON.stringify(user));
-        console.log("error: " + error);
-    });
-
-    if (!user) {
-        bot.reply(message, "not authorized");
-        return;
-    }
-
-    const WebClient = require("@slack/client").WebClient;
-    const token = process.env.SLACK_API_TOKEN || ""; // from env in this case or your data store
-    const web = new WebClient(token);
-    let channel;
-
-    const channelsPromise = new Promise(function(resolve, reject) {
-        web.channels.list({}, function(err,response) {
-            channel = response.channels.find((channel) => channel.name === sChannelName);
-            if (channel) {
-                resolve("found channel");
+    const userPromise = new Promise(function(resolve, reject) {
+        controller.storage.users.get(message.user, function(error, storedUser){
+            user = storedUser;
+            if (user) {
+                console.log("debug: ** user: " + JSON.stringify(user, null, 2));
+                resolve("user is authorized");
             } else {
-                reject("didn't find channel");
+                reject("user not authorized");
             }
         });
-      })
-      .then(() => {
-        web.channels.history({channel: channel.id, count: 1}, function(err, response) {
-            const latest = response.messages[0];
-            const aReactPromises = [];
+    })
+    .then(() => {
+        const WebClient = require("@slack/client").WebClient;
+        const token = process.env.SLACK_API_TOKEN || ""; // from env in this case or your data store
+        const web = new WebClient(token);
+        let channel;
 
-            const http = require("https");
-
-            for (reaction of aReactions) {
-                const reactPromise = new Promise(function(resolve, reject) {
-                    const options = {
-                        "method": "POST",
-                        "hostname": "slack.com",
-                        "path": "/api/reactions.add?token=" + user.access_token + 
-                            "&name=" + reaction + 
-                            "&channel=" + channel.id + 
-                            "&timestamp=" + latest.ts
-                    };
-            
-                    const req = http.request(options, function (res) {
-                        const chunks = [];
-                
-                        res.on("data", function (chunk) {
-                            chunks.push(chunk);
-                        });
-                
-                        res.on("end", function () {
-                            const body = Buffer.concat(chunks);
-                            const response = JSON.parse(body.toString());
-                            if (response.ok) {
-                                resolve(response);
-                            } else {
-                                reject(response);
-                            }
-                        });
-                    });
-                    req.end();
-                });
-                aReactPromises.push(reactPromise);
-            }
-            const reflect = promise => promise.then(value => ({value, status: "fulfilled" }),
-                            error => ({error, status: "rejected" }));
-
-            Promise.all(aReactPromises.map(reflect)).then(function(results){
-                console.log(results);
-                const error = results.some(x => x.status === "rejected");
-                if (error) {
-                    console.log("something went wrong when trying to add reactions")
-                    bot.reply(message, "something went wrong");
+        const channelsPromise = new Promise(function(resolve, reject) {
+            web.channels.list({}, function(err,response) {
+                channel = response.channels.find((channel) => channel.name === sChannelName);
+                if (channel) {
+                    resolve("found channel");
                 } else {
-                    console.log("reacted successfully")
-                    bot.reply(message, "reacted successfully");
+                    reject("didn't find channel");
                 }
             });
+        })
+        .then(() => {
+            web.channels.history({channel: channel.id, count: 1}, function(err, response) {
+                const latest = response.messages[0];
+
+                if (!latest) { 
+                    console.log("debug: ** couldn't find latest message");
+                    bot.reply(message, "couldn't find message in channel");
+                } else {
+                    const aReactPromises = [];
+
+                    const http = require("https");
+
+                    for (reaction of aReactions) {
+                        const reactPromise = new Promise(function(resolve, reject) {
+                            const options = {
+                                "method": "POST",
+                                "hostname": "slack.com",
+                                "path": "/api/reactions.add?token=" + user.access_token + 
+                                    "&name=" + reaction + 
+                                    "&channel=" + channel.id + 
+                                    "&timestamp=" + latest.ts
+                            };
+                    
+                            const req = http.request(options, function (res) {
+                                const chunks = [];
+                        
+                                res.on("data", function (chunk) {
+                                    chunks.push(chunk);
+                                });
+                        
+                                res.on("end", function () {
+                                    const body = Buffer.concat(chunks);
+                                    const response = JSON.parse(body.toString());
+                                    if (response.ok) {
+                                        resolve(response);
+                                    } else {
+                                        reject(response);
+                                    }
+                                });
+                            });
+                            req.end();
+                        });
+                        aReactPromises.push(reactPromise);
+                    }
+                    const reflect = promise => promise.then(value => ({value, status: "fulfilled" }),
+                                    error => ({error, status: "rejected" }));
+
+                    Promise.all(aReactPromises.map(reflect)).then(function(results){
+                        console.log(results);
+                        const error = results.some(x => x.status === "rejected");
+                        if (error) {
+                            console.log("debug: ** something went wrong when trying to add reactions")
+                            bot.reply(message, "couldn't add reactions");
+                        } else {
+                            console.log("debug: ** reacted successfully")
+                            bot.reply(message, "reacted successfully");
+                        }
+                    });
+                }
+                
+            });
+        })
+        .catch((error) => {
+            console.log(error);
+            console.log("debug: ** something went wrong when getting the channels");
+            bot.reply(message, "couldn't find channel");
         });
-      })
-      .catch((error) => {
-          console.log(error);
-          console.log("something went wrong when getting the channels")
-          bot.reply(message, "something went wrong");
-      });
+    })
+    .catch((error) => {
+        console.log(error);
+        console.log("debug: ** something went wrong when getting the user info");
+        bot.reply(message, "not authorized");
+    });
 });
 
 
